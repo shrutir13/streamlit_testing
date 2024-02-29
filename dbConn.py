@@ -25,8 +25,11 @@ class jsonConversion:
         with open(filename, 'r') as encrypted_file:
             encrypted_config = encrypted_file.read()
 
+        # # Load the secret key from the file
+        # with open('secret.key', 'rb') as key_file:
+        #     secret_key = key_file.read()
         # Load the secret key from the file
-        with open('secret.key', 'rb') as key_file:
+        with open('secret-trainingdb.key', 'rb') as key_file:
             secret_key = key_file.read()
 
         # Create a Fernet cipher using the loaded secret key
@@ -45,11 +48,17 @@ class jsonConversion:
         config_parser = configparser.ConfigParser()
         config_parser.read_string(decrypted_config)
 
+        # # Access the client details from the [client_details] section
+        # username = config_parser.get('client_details', 'username')
+        # userpwd = config_parser.get('client_details', 'userpwd')
+        # port = config_parser.get('client_details', 'port')
+        # dsn = config_parser.get('client_details', 'dsn')
+
         # Access the client details from the [client_details] section
-        username = config_parser.get('client_details', 'username')
-        userpwd = config_parser.get('client_details', 'userpwd')
-        port = config_parser.get('client_details', 'port')
-        dsn = config_parser.get('client_details', 'dsn')
+        username = config_parser.get('training_db', 'username')
+        userpwd = config_parser.get('training_db', 'userpwd')
+        port = config_parser.get('training_db', 'port')
+        dsn = config_parser.get('training_db', 'dsn')
 
         return username, userpwd, port, dsn
 
@@ -58,40 +67,52 @@ class main:
     def dbConn():
 
         creds = jsonConversion()
-        filename = 'encrypted_client_details.ini'
+        # filename = 'encrypted_client_details.ini'
+        filename ='encrypted_training_db.ini'
         username, userpwd, port, dsn = creds.read_client_details(filename)
         connection = oracledb.connect(user=username, password=userpwd,
                                         port = port,dsn=dsn)
         
         source_cursor = connection.cursor()
         chunk_size = 1000
-        sql1="""select item, status from item_master where status= 'A' fetch first 20 rows only"""
-        sql2="""select item, status from item_master where status= 'S' fetch first 50 rows only """
-        sql3="""select item, status from item_master where status= 'W' fetch first 30 rows only"""
-        source_cursor.execute(sql1)
-        data_1=[]
-        rows1 = source_cursor.fetchall()
-        for row in rows1:
-            # print(row)
-            data_1.append(row)
-        source_cursor.close()
+
+        # sql1="""select item, status from item_master where status= 'A' fetch first 20 rows only"""
+        # sql2="""select item, status from item_master where status= 'S' fetch first 50 rows only """
+        # sql3="""select item, status from item_master where status= 'W' fetch first 30 rows only"""
+        # source_cursor.execute(sql1)
+        # data_1=[]
+        # rows1 = source_cursor.fetchall()
+        # for row in rows1:
+        #     # print(row)
+        #     data_1.append(row)
+        # source_cursor.close()
+        # source_cursor = connection.cursor()
+        # source_cursor.execute(sql2)
+        # data_2=[]
+        # rows2 = source_cursor.fetchall()
+        # for row in rows2:
+        #     # print(row)
+        #     data_2.append(row)
+        # source_cursor = connection.cursor()
+        # source_cursor.execute(sql3)
+        # data_3=[]
+        # rows3 = source_cursor.fetchall()
+        # for row in rows3:
+        #     # print(row)
+        #     data_3.append(row)
+
+        sql4="SELECT order_id, ship_mode FROM ORDERS2 where segment in ('Consumer', 'Corporate') "
         source_cursor = connection.cursor()
-        source_cursor.execute(sql2)
-        data_2=[]
-        rows2 = source_cursor.fetchall()
-        for row in rows2:
-            # print(row)
-            data_2.append(row)
-        source_cursor = connection.cursor()
-        source_cursor.execute(sql3)
-        data_3=[]
+        source_cursor.execute(sql4)
+        data_4=[]
         rows3 = source_cursor.fetchall()
         for row in rows3:
             # print(row)
-            data_3.append(row)
+            data_4.append(row)
         connection.close()
+        # return data_1, data_2, data_3
+        return data_4
 
-        return data_1, data_2, data_3
 # main.dbConn()
 
 # username="TSTDBUSR"
