@@ -4,3 +4,4 @@ numpy
 plotly==5.19.0
 oracledb==2.0.1
 requests==2.31.0
+configparser_crypt
