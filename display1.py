@@ -8,13 +8,26 @@ import time
 #set_pageconfig should be the first element of the page
 st.set_page_config(page_title='Survey Results')
 st.header('Item Status')
-data4 = main.dbConn()
 
-columns = ['order_id','ship_mode']
-df1 = pd.DataFrame(data4, columns=columns)
+#read frm db
+# data4 = main.dbConn()
+# columns = ['order_id','ship_mode']
+# df1 = pd.DataFrame(data4, columns=columns)
 
+#read from excel
+### --- LOAD DATAFRAME
+excel_file = 'output.xlsx'
+sheet_name = 'Sheet1'
 
-combined_df = pd.concat([df1])
+df = pd.read_excel(excel_file,
+                   sheet_name=sheet_name)
+
+df_participants = pd.read_excel(excel_file,
+                                sheet_name= sheet_name
+                                )
+df_participants.dropna(inplace=True)
+
+combined_df = pd.concat([df_participants])
 with st.sidebar:
     with st.echo():
         st.write("This code will be printed to the sidebar.")
@@ -32,7 +45,7 @@ with st.sidebar:
 
 # Display the data in Streamlit
 st.write("Data from the database:")
-st.write(df1)
+st.write(df_participants)
 # to display all dashboards
 if st.button('Show Dashboards'):
     # Call functions to display dashboards
