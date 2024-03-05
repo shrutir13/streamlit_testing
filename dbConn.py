@@ -64,8 +64,8 @@ class jsonConversion:
 
     
 class main:
+    
     def dbConn():
-
         creds = jsonConversion()
         # filename = 'encrypted_client_details.ini'
         filename ='encrypted_training_db.ini'
@@ -106,26 +106,23 @@ class main:
         source_cursor.execute(sql4)
         data_4=[]
         rows3 = source_cursor.fetchall()
+
+            # Create a DataFrame from the fetched rows
+        df1 = pd.DataFrame(rows3, columns=['order_id', 'ship_mode'])
+        
+        # Write the DataFrame to an Excel file
+        excel_file_path = 'output.xlsx'
+        df1.to_excel(excel_file_path, index=False)  # Set index=False to exclude DataFrame index from Excel
+        
+        print(f"Data written to Excel file: {excel_file_path}")
+
         for row in rows3:
             # print(row)
             data_4.append(row)
         connection.close()
-        # return data_1, data_2, data_3
-        return data_4
-
+        #direct db data
+        # return data_4
+        return #for excel access
+        
 # main.dbConn()
 
-# username="TSTDBUSR"
-# userpwd = os.environ.get("W3lc0me123")
-# host = "192.168.161.46"
-# port = 1521
-# service_name = "RMSDEV"
-
-# username="ranjith"
-# userpwd = os.environ.get("ranjith2022")
-# host = "192.168.161.200"
-# port = 1521
-# service_name = "RMSDEV"
-
-# dsn = f'{username}/{userpwd}@{host}:{port}/{service_name}'
-# connection = oracledb.connect(dsn)
