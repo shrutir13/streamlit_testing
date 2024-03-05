@@ -2,103 +2,70 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 from PIL import Image
-from dbConn import main
-import time
 
-#set_pageconfig should be the first element of the page
 st.set_page_config(page_title='Survey Results')
-st.header('Item Status')
-data4 = main.dbConn()
+st.header('Survey Results 2021')
+st.subheader('Was the tutorial helpful?')
 
-columns = ['order_id','ship_mode']
-df1 = pd.DataFrame(data4, columns=columns)
+### --- LOAD DATAFRAME
+excel_file = 'Survey_Results.xlsx'
+sheet_name = 'DATA'
 
+df = pd.read_excel(excel_file,
+                   sheet_name=sheet_name,
+                   usecols='B:D',
+                   header=3)
 
-combined_df = pd.concat([df1])
-with st.sidebar:
-    with st.echo():
-        st.write("This code will be printed to the sidebar.")
+df_participants = pd.read_excel(excel_file,
+                                sheet_name= sheet_name,
+                                usecols='F:G',
+                                header=3)
+df_participants.dropna(inplace=True)
 
-    with st.spinner("Loading..."):
-        time.sleep(5)
-    st.success("Done!")
-
-    #button inside side bar
-    if st.button('Displaying charts inside side bar '):
-        # Call functions to display dashboards
-        #line chart - type 1
-        st.line_chart(combined_df.set_index('order_id'))
-
-
-# Display the data in Streamlit
-st.write("Data from the database:")
-st.write(df1)
-# to display all dashboards
-if st.button('Show Dashboards'):
-    # Call functions to display dashboards
-    # line chart type 2
-    st.line_chart(combined_df,x='order_id', y='ship_mode')
-
-#display the graph in the main page
-show_graph=st.sidebar.button('display in main screen')
-if show_graph:
-    #display syntax 1
-    st.area_chart(combined_df)
-    
-st.write("\ndisplaying chart based on the selection")
 # --- STREAMLIT SELECTION
-order_id = combined_df['order_id'].unique().tolist()
-ship_mode = combined_df['ship_mode'].unique().tolist()
+department = df['Department'].unique().tolist()
+ages = df['Age'].unique().tolist()
 
-#------------------------------multi select options-------------------------------
-    # Multiselect for selecting status - dropdown
-# selected_status = st.multiselect('Select Status', Status)
-    # Multiselect for selecting status - display
-selected_ship_mode = st.multiselect('ship_mode:',
-                                    ship_mode,
-                                    default=ship_mode)
-#-------------------------------
-# Filter the data based on the selected status
-filtered_df = combined_df[combined_df['ship_mode'].isin(selected_ship_mode)]
-#to display the quantity
-number_of_result = filtered_df.shape[0]
-st.markdown(f'*order_id count: {number_of_result}*')
-# Create a bar chart based on the selected status
-# The shape tuple contains two elements: the number of rows and the number of columns. Therefore, filtered_df.shape[0] accesses the first element of the tuple, which represents the number of rows in the DataFrame filtered_df.
-if filtered_df.shape[0] > 0:
-    st.bar_chart(filtered_df.groupby('ship_mode').size())
-else:
-    st.write("No data available for the selected ship_mode.")
+age_selection = st.slider('Age:',
+                        min_value= min(ages),
+                        max_value= max(ages),
+                        value=(min(ages),max(ages)))
 
+department_selection = st.multiselect('Department:',
+                                    department,
+                                    default=department)
 
+# --- FILTER DATAFRAME BASED ON SELECTION
+mask = (df['Age'].between(*age_selection)) & (df['Department'].isin(department_selection))
+number_of_result = df[mask].shape[0]
+st.markdown(f'*Available Results: {number_of_result}*')
 
+# --- GROUP DATAFRAME AFTER SELECTION
+df_grouped = df[mask].groupby(by=['Rating']).count()[['Age']]
+df_grouped = df_grouped.rename(columns={'Age': 'Votes'})
+df_grouped = df_grouped.reset_index()
 
+# --- PLOT BAR CHART
+bar_chart = px.bar(df_grouped,
+                   x='Rating',
+                   y='Votes',
+                   text='Votes',
+                   color_discrete_sequence = ['#F63366']*len(df_grouped),
+                   template= 'plotly_white')
+st.plotly_chart(bar_chart)
 
+# --- DISPLAY IMAGE & DATAFRAME
+col1, col2 = st.columns(2)
+image = Image.open('images/survey.jpg')
+col1.image(image,
+        caption='Designed by slidesgo / Freepik',
+        use_column_width=True)
+col2.dataframe(df[mask])
 
+# --- PLOT PIE CHART
+pie_chart = px.pie(df_participants,
+                title='Total No. of Participants',
+                values='Participants',
+                names='Departments')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# status_counts = df['status'].value_counts().reset_index()
-# status_counts.columns = ['Status', 'Count']
-
-# # Plot the bar chart using Plotly Express
-# fig = px.bar(status_counts, x='Status', y='Count', title='Count of Status')
-# st.plotly_chart(fig)
-
-# # Plot the pie chart using Plotly Express
-# fig = px.pie(status_counts, values='Count', names='Status', title='Status Distribution')
-# st.plotly_chart(fig)
+st.plotly_chart(pie_chart)
